@@ -16,6 +16,7 @@ class Home extends React.Component {
                 following: "",
                 repositories: [],
                 pullrequest: 0,
+                commits: 0,
 
 
             },
@@ -28,6 +29,8 @@ class Home extends React.Component {
                 following: "",
                 repositories: [],
                 pullrequest: 0,
+                commits: 0,
+
 
             },
         };
@@ -35,27 +38,33 @@ class Home extends React.Component {
     }
     resetUser1 = (flag) => {
         var user1 = this.state.user1;
-        user1.message = flag ? "" : "user does not exist";
-        user1.img = "https://payalchitroda.github.io/githubapi/default-avatar.png"
-        user1.name = ""
-        user1.public_repos = ""
-        user1.followers = ""
-        user1.following = ""
-        user1.repositories = []
-        user1.pullrequest = 0
+        user1 = {
+            message: flag ? "" : "user does not exist",
+            img: "https://payalchitroda.github.io/githubapi/default-avatar.png",
+            name: "",
+            public_repos: "",
+            followers: "",
+            following: "",
+            repositories: [],
+            pullrequest: 0,
+            commits: 0
+        }
         this.setState({ user1: user1 });
 
     }
     resetUser2 = (flag) => {
         var user2 = this.state.user2;
-        user2.message = flag ? "" : "user does not exist";
-        user2.img = "https://payalchitroda.github.io/githubapi/default-avatar.png"
-        user2.name = ""
-        user2.public_repos = ""
-        user2.followers = ""
-        user2.following = ""
-        user2.repositories = []
-        user2.pullrequest = 0
+        user2 = {
+            message: flag ? "" : "user does not exist",
+            img: "https://payalchitroda.github.io/githubapi/default-avatar.png",
+            name: "",
+            public_repos: "",
+            followers: "",
+            following: "",
+            repositories: [],
+            pullrequest: 0,
+            commits: 0
+        }
         this.setState({ user2: user2 });
 
     }
@@ -71,7 +80,7 @@ class Home extends React.Component {
                 data.map((repo) => {
                     user.repositories.push(repo.name)
                     this.getPullRequest(username, repo.name, id)
-                   
+                    this.getCommits(username, repo.name, id)
                 })
 
                 id == 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
@@ -88,6 +97,7 @@ class Home extends React.Component {
             .then((response) => {
                 return response.json();
             }).then((data) => {
+                //console.log("pull request"+data)
                 user.pullrequest += data.length;
                 id == 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
 
@@ -96,7 +106,32 @@ class Home extends React.Component {
             });
 
     }
-   
+    getCommits = (username, repo, id) => {
+        var user = id == 0 ? this.state.user1 : this.state.user2;
+        fetch('https://api.github.com/repos/' + username + '/' + repo + '/stats/participation')
+            .then((response) => {
+                return response.json();
+            }).then((data) => {
+                console.log(repo)
+                console.log(data)
+                user.commits += data.owner[51]
+                id == 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+
+            }).catch(function (error) {
+                console.log(error);
+            });
+    }
+
+    checkRateLimit = () => {
+        fetch('https://api.github.com/rate_limit')
+            .then((response) => {
+                return response.json();
+            }).then((data) => {
+                console.log(data)
+            }).catch(function (error) {
+                console.log(error);
+            });
+    }
     stats = () => {
 
         if (this.refs.user1.value && this.refs.user2.value) {
@@ -194,6 +229,10 @@ class Home extends React.Component {
                     <Profile user={this.state.user1} />
 
                 </div>
+                <div className='middle'>
+                    <button onClick={() => this.stats()}>Get stats</button>
+                    <button onClick={() => this.checkRateLimit()}>check rate limit</button>
+                </div>
                 <div className="right">
                     <img src={this.state.user2.img} />
                     <br />   <br />
@@ -203,8 +242,6 @@ class Home extends React.Component {
                     <Profile user={this.state.user2} />
 
                 </div>
-
-                <button onClick={() => this.stats()}>Get stats</button>
 
             </div>
         );

@@ -7,9 +7,6 @@ class Profile extends React.Component {
         this.state = {
            
         };
-
-    
-
     }
     render() {
         const { user } = this.props
@@ -19,7 +16,8 @@ class Profile extends React.Component {
              Repositories: {user.public_repos}<br/>
              Followers: {user.followers}<br/>
              Following: {user.following}<br/>
-             Pull Requests: {user.pullrequest}
+             Pull Requests: {user.pullrequest}<br/>
+             Last week commits: {user.commits}
             </div>
         );
     }
