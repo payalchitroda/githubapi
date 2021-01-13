@@ -18,7 +18,8 @@ class Profile extends React.Component {
              Name: {user.name}<br/>
              Repositories: {user.public_repos}<br/>
              Followers: {user.followers}<br/>
-             Following: {user.following}
+             Following: {user.following}<br/>
+             Pull Requests: {user.pullrequest}
             </div>
         );
     }
