@@ -1,7 +1,7 @@
 import React from 'react';
 import './home.css';
 import Profile from './profile.js';
-const DEFAULT_USER={
+const DEFAULT_USER = {
     img: "https://payalchitroda.github.io/githubapi/default-avatar.png",
     name: "",
     public_repos: "",
@@ -12,26 +12,30 @@ const DEFAULT_USER={
     pullrequest: 0,
     commits: 0,
 
-} 
+}
+
+const controller = new AbortController();
+const { signal } = controller;
 class Home extends React.Component {
 
     constructor(props) {
         super(props)
         this.state = {
-            user1: {...DEFAULT_USER},
-            user2: {...DEFAULT_USER},
+            user1: { ...DEFAULT_USER },
+            user2: { ...DEFAULT_USER },
         };
 
     }
-    resetUser = (flag,id) => {
+
+    resetUser = (flag, id) => {
         var user = id === 0 ? this.state.user1 : this.state.user2
-        user={...DEFAULT_USER, message: flag ? "" : "user does not exist"}
+        user = { ...DEFAULT_USER, message: flag ? "" : "user does not exist" }
         id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
     }
-    
+
     getRepositories = (username, id) => {
 
-        fetch('https://api.github.com/users/' + username + '/repos')
+        fetch('https://api.github.com/users/' + username + '/repos',{signal})
             .then((response) => {
                 return response.json();
             }).then((data) => {
@@ -53,7 +57,7 @@ class Home extends React.Component {
     }
     getPullRequest = (username, repo, id) => {
         var user = id === 0 ? this.state.user1 : this.state.user2;
-        fetch('https://api.github.com/repos/' + username + '/' + repo + '/pulls')
+        fetch('https://api.github.com/repos/' + username + '/' + repo + '/pulls', { signal })
             .then((response) => {
                 return response.json();
             }).then((data) => {
@@ -67,7 +71,7 @@ class Home extends React.Component {
     }
     getCommits = (username, repo, id) => {
         var user = id === 0 ? this.state.user1 : this.state.user2;
-        fetch('https://api.github.com/repos/' + username + '/' + repo + '/stats/participation')
+        fetch('https://api.github.com/repos/' + username + '/' + repo + '/stats/participation', { signal })
             .then((response) => {
                 return response.json();
             }).then((data) => {
@@ -86,8 +90,13 @@ class Home extends React.Component {
             }).then((data) => {
                 console.log(data)
             }).catch(function (error) {
-                console.log(error);
+                console.log(error)
             });
+
+    }
+    cancelrequest = () => {
+        alert("Pull request and Last week commits aborted")
+        controller.abort()
     }
     setUserValue = (id, data) => {
         var user = id === 0 ? this.state.user1 : this.state.user2;
@@ -101,7 +110,7 @@ class Home extends React.Component {
             repositories: [],
             pullrequest: 0,
             commits: 0,
-        
+
 
         }
 
@@ -111,8 +120,8 @@ class Home extends React.Component {
     stats = () => {
 
         if (this.refs.user1.value && this.refs.user2.value) {
-            this.resetUser(true,0)
-            this.resetUser(true,1)
+            this.resetUser(true, 0)
+            this.resetUser(true, 1)
             Promise.all([
                 fetch('https://api.github.com/users/' + this.refs.user1.value),
                 fetch('https://api.github.com/users/' + this.refs.user2.value)
@@ -121,35 +130,35 @@ class Home extends React.Component {
                     return response.json();
                 }));
             }).then((data) => {
-               
+
+
                 if (data[0].message && data[1].message) {
-                    this.resetUser(false,0)
-                    this.resetUser(false,1)
+                    this.resetUser(false, 0)
+                    this.resetUser(false, 1)
                 }
                 else if (data[0].message) {
-                    this.resetUser(false,0)
+                    this.resetUser(false, 0)
                     this.getRepositories(this.refs.user2.value, 1)
-                    this.setUserValue(1,data[1])
+                    this.setUserValue(1, data[1])
                 }
                 else if (data[1].message) {
-                    this.resetUser(false,1)
+                    this.resetUser(false, 1)
                     this.getRepositories(this.refs.user1.value, 0)
-                    this.setUserValue(0,data[0])
+                    this.setUserValue(0, data[0])
                 }
                 else {
 
                     this.getRepositories(this.refs.user1.value, 0)
                     this.getRepositories(this.refs.user2.value, 1)
-                    this.setUserValue(0,data[0])
-                    this.setUserValue(1,data[1])
+                    this.setUserValue(0, data[0])
+                    this.setUserValue(1, data[1])
 
                 }
-              
+
+
             }).catch(function (error) {
                 console.log(error);
             });
-
-
         }
         else {
             alert("Enter all fields")
@@ -174,6 +183,7 @@ class Home extends React.Component {
                 </div>
                 <div className='middle'>
                     <button onClick={() => this.stats()}>Get stats</button>
+                    <button onClick={() => this.cancelrequest()}>cancel request</button>
                     <button onClick={() => this.checkRateLimit()}>check rate limit</button>
                 </div>
                 <div className="right">
