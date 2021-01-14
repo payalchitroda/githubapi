@@ -1,81 +1,41 @@
 import React from 'react';
 import './home.css';
 import Profile from './profile.js';
+const DEFAULT_USER={
+    img: "https://payalchitroda.github.io/githubapi/default-avatar.png",
+    name: "",
+    public_repos: "",
+    message: "",
+    followers: "",
+    following: "",
+    repositories: [],
+    pullrequest: 0,
+    commits: 0,
 
+} 
 class Home extends React.Component {
 
     constructor(props) {
         super(props)
         this.state = {
-            user1: {
-                img: "https://payalchitroda.github.io/githubapi/default-avatar.png",
-                name: "",
-                public_repos: "",
-                message: "",
-                followers: "",
-                following: "",
-                repositories: [],
-                pullrequest: 0,
-                commits: 0,
-
-
-            },
-            user2: {
-                img: "https://payalchitroda.github.io/githubapi/default-avatar.png",
-                name: "",
-                public_repos: "",
-                message: "",
-                followers: "",
-                following: "",
-                repositories: [],
-                pullrequest: 0,
-                commits: 0,
-
-
-            },
+            user1: {...DEFAULT_USER},
+            user2: {...DEFAULT_USER},
         };
 
     }
-    resetUser1 = (flag) => {
-        var user1 = this.state.user1;
-        user1 = {
-            message: flag ? "" : "user does not exist",
-            img: "https://payalchitroda.github.io/githubapi/default-avatar.png",
-            name: "",
-            public_repos: "",
-            followers: "",
-            following: "",
-            repositories: [],
-            pullrequest: 0,
-            commits: 0
-        }
-        this.setState({ user1: user1 });
-
+    resetUser = (flag,id) => {
+        var user = id === 0 ? this.state.user1 : this.state.user2
+        user={...DEFAULT_USER, message: flag ? "" : "user does not exist"}
+        id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
     }
-    resetUser2 = (flag) => {
-        var user2 = this.state.user2;
-        user2 = {
-            message: flag ? "" : "user does not exist",
-            img: "https://payalchitroda.github.io/githubapi/default-avatar.png",
-            name: "",
-            public_repos: "",
-            followers: "",
-            following: "",
-            repositories: [],
-            pullrequest: 0,
-            commits: 0
-        }
-        this.setState({ user2: user2 });
-
-    }
+    
     getRepositories = (username, id) => {
 
         fetch('https://api.github.com/users/' + username + '/repos')
             .then((response) => {
-
                 return response.json();
             }).then((data) => {
-                var user = id == 0 ? this.state.user1 : this.state.user2
+                var user = id === 0 ? this.state.user1 : this.state.user2
 
                 data.map((repo) => {
                     user.repositories.push(repo.name)
@@ -83,7 +43,7 @@ class Home extends React.Component {
                     this.getCommits(username, repo.name, id)
                 })
 
-                id == 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+                id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
 
 
             }).catch(function (error) {
@@ -92,14 +52,13 @@ class Home extends React.Component {
 
     }
     getPullRequest = (username, repo, id) => {
-        var user = id == 0 ? this.state.user1 : this.state.user2;
+        var user = id === 0 ? this.state.user1 : this.state.user2;
         fetch('https://api.github.com/repos/' + username + '/' + repo + '/pulls')
             .then((response) => {
                 return response.json();
             }).then((data) => {
-                //console.log("pull request"+data)
                 user.pullrequest += data.length;
-                id == 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+                id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
 
             }).catch(function (error) {
                 console.log(error);
@@ -107,15 +66,13 @@ class Home extends React.Component {
 
     }
     getCommits = (username, repo, id) => {
-        var user = id == 0 ? this.state.user1 : this.state.user2;
+        var user = id === 0 ? this.state.user1 : this.state.user2;
         fetch('https://api.github.com/repos/' + username + '/' + repo + '/stats/participation')
             .then((response) => {
                 return response.json();
             }).then((data) => {
-                console.log(repo)
-                console.log(data)
                 user.commits += data.owner[51]
-                id == 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+                id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
 
             }).catch(function (error) {
                 console.log(error);
@@ -132,11 +89,30 @@ class Home extends React.Component {
                 console.log(error);
             });
     }
+    setUserValue = (id, data) => {
+        var user = id === 0 ? this.state.user1 : this.state.user2;
+        user = {
+            img: data.avatar_url,
+            name: data.name,
+            public_repos: data.public_repos,
+            message: "",
+            followers: data.followers,
+            following: data.following,
+            repositories: [],
+            pullrequest: 0,
+            commits: 0,
+        
+
+        }
+
+        id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+
+    }
     stats = () => {
 
         if (this.refs.user1.value && this.refs.user2.value) {
-            this.resetUser1(true)
-            this.resetUser2(true)
+            this.resetUser(true,0)
+            this.resetUser(true,1)
             Promise.all([
                 fetch('https://api.github.com/users/' + this.refs.user1.value),
                 fetch('https://api.github.com/users/' + this.refs.user2.value)
@@ -145,62 +121,30 @@ class Home extends React.Component {
                     return response.json();
                 }));
             }).then((data) => {
-                var user1 = this.state.user1;
-                var user2 = this.state.user2;
-
+               
                 if (data[0].message && data[1].message) {
-                    this.resetUser1(false)
-                    this.resetUser2(false)
+                    this.resetUser(false,0)
+                    this.resetUser(false,1)
                 }
                 else if (data[0].message) {
-                    this.resetUser1(false)
+                    this.resetUser(false,0)
                     this.getRepositories(this.refs.user2.value, 1)
-                    user2.img = data[1].avatar_url;
-                    user2.name = data[1].name;
-                    user2.public_repos = data[1].public_repos;
-                    user2.message = "";
-                    user2.followers = data[1].followers
-                    user2.following = data[1].following
+                    this.setUserValue(1,data[1])
                 }
                 else if (data[1].message) {
-                    this.resetUser2(false)
+                    this.resetUser(false,1)
                     this.getRepositories(this.refs.user1.value, 0)
-                    user1.img = data[0].avatar_url;
-                    user1.name = data[0].name;
-                    user1.public_repos = data[0].public_repos;
-                    user1.message = "";
-                    user1.followers = data[0].followers
-                    user1.following = data[0].following
-
+                    this.setUserValue(0,data[0])
                 }
                 else {
 
                     this.getRepositories(this.refs.user1.value, 0)
                     this.getRepositories(this.refs.user2.value, 1)
-                    user1.img = data[0].avatar_url;
-                    user1.name = data[0].name;
-                    user1.public_repos = data[0].public_repos;
-                    user1.message = "";
-                    user1.followers = data[0].followers
-                    user1.following = data[0].following
-
-
-                    user2.img = data[1].avatar_url;
-                    user2.name = data[1].name;
-                    user2.public_repos = data[1].public_repos;
-                    user2.message = "";
-                    user2.followers = data[1].followers
-                    user2.following = data[1].following
-
-
-
+                    this.setUserValue(0,data[0])
+                    this.setUserValue(1,data[1])
 
                 }
-                this.setState({ user1: user1, user2: user2 });
-
-                // console.log(data);
-
-
+              
             }).catch(function (error) {
                 console.log(error);
             });
@@ -210,7 +154,6 @@ class Home extends React.Component {
         else {
             alert("Enter all fields")
         }
-        console.log(this.state.user1)
 
     }
     render() {
