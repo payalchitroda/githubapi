@@ -26,28 +26,34 @@ class Home extends React.Component {
         };
 
     }
+    getUser = (id) => {
+        return id === 0 ? this.state.user1 : this.state.user2
 
-    resetUser = (flag, id) => {
-        var user = id === 0 ? this.state.user1 : this.state.user2
-        user = { ...DEFAULT_USER, message: flag ? "" : "user does not exist" }
+    }
+    setUser = (id, user) => {
         id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+
+    }
+    resetUser = (flag, id) => {
+        var user = this.getUser(id)
+        user = { ...DEFAULT_USER, message: flag ? "" : "user does not exist" }
+        this.setUser(id, user)
     }
 
     getRepositories = (username, id) => {
 
-        fetch('https://api.github.com/users/' + username + '/repos',{signal})
+        fetch('https://api.github.com/users/' + username + '/repos', { signal })
             .then((response) => {
                 return response.json();
             }).then((data) => {
-                var user = id === 0 ? this.state.user1 : this.state.user2
-
+                var user = this.getUser(id)
                 data.map((repo) => {
                     user.repositories.push(repo.name)
                     this.getPullRequest(username, repo.name, id)
                     this.getCommits(username, repo.name, id)
                 })
 
-                id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+                this.setUser(id, user)
 
 
             }).catch(function (error) {
@@ -56,13 +62,14 @@ class Home extends React.Component {
 
     }
     getPullRequest = (username, repo, id) => {
-        var user = id === 0 ? this.state.user1 : this.state.user2;
+        var user = this.getUser(id)
+
         fetch('https://api.github.com/repos/' + username + '/' + repo + '/pulls', { signal })
             .then((response) => {
                 return response.json();
             }).then((data) => {
                 user.pullrequest += data.length;
-                id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+                this.setUser(id, user)
 
             }).catch(function (error) {
                 console.log(error);
@@ -70,13 +77,14 @@ class Home extends React.Component {
 
     }
     getCommits = (username, repo, id) => {
-        var user = id === 0 ? this.state.user1 : this.state.user2;
+        var user = this.getUser(id)
+
         fetch('https://api.github.com/repos/' + username + '/' + repo + '/stats/participation', { signal })
             .then((response) => {
                 return response.json();
             }).then((data) => {
                 user.commits += data.owner[51]
-                id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+                this.setUser(id, user)
 
             }).catch(function (error) {
                 console.log(error);
@@ -99,7 +107,7 @@ class Home extends React.Component {
         controller.abort()
     }
     setUserValue = (id, data) => {
-        var user = id === 0 ? this.state.user1 : this.state.user2;
+        var user = this.getUser(id)
         user = {
             img: data.avatar_url,
             name: data.name,
@@ -113,8 +121,7 @@ class Home extends React.Component {
 
 
         }
-
-        id === 0 ? this.setState({ user1: user }) : this.setState({ user2: user })
+        this.setUser(id, user)
 
     }
     stats = () => {
@@ -128,9 +135,10 @@ class Home extends React.Component {
             ]).then((responses) => {
                 return Promise.all(responses.map((response) => {
                     return response.json();
-                }));
-            }).then((data) => {
 
+                }));
+
+            }).then((data) => {
 
                 if (data[0].message && data[1].message) {
                     this.resetUser(false, 0)
@@ -138,26 +146,26 @@ class Home extends React.Component {
                 }
                 else if (data[0].message) {
                     this.resetUser(false, 0)
-                    this.getRepositories(this.refs.user2.value, 1)
+                    // this.getRepositories(this.refs.user2.value, 1)
                     this.setUserValue(1, data[1])
                 }
                 else if (data[1].message) {
                     this.resetUser(false, 1)
-                    this.getRepositories(this.refs.user1.value, 0)
+                    // this.getRepositories(this.refs.user1.value, 0)
                     this.setUserValue(0, data[0])
                 }
                 else {
 
-                    this.getRepositories(this.refs.user1.value, 0)
-                    this.getRepositories(this.refs.user2.value, 1)
+                    // this.getRepositories(this.refs.user1.value, 0)
+                    //this.getRepositories(this.refs.user2.value, 1)
                     this.setUserValue(0, data[0])
                     this.setUserValue(1, data[1])
 
                 }
 
 
-            }).catch(function (error) {
-                console.log(error);
+            }).catch(function (e) {
+                console.log(e.message);
             });
         }
         else {
@@ -165,17 +173,21 @@ class Home extends React.Component {
         }
 
     }
+
+
     render() {
 
         return (
             <div>
+
                 <div className="left">
                     {/* <img src={this.state.user1.img} /> */}
                     <img src={this.state.user1.img} />
 
                     <br />   <br />
 
-                UserName:<input ref="user1" type="text" name="user1" /><br />
+                    UserName:<input ref="user1" type="text" name="user1" onChange={() => this.stats()} /><br />
+
                     {this.state.user1.message}<br />
 
                     <Profile user={this.state.user1} />
@@ -189,7 +201,7 @@ class Home extends React.Component {
                 <div className="right">
                     <img src={this.state.user2.img} />
                     <br />   <br />
-             UserName:<input ref="user2" type="text" name="user2" /><br />
+                    UserName:<input ref="user2" type="text" name="user2" onChange={() => this.stats()} /><br />
 
                     {this.state.user2.message}<br />
                     <Profile user={this.state.user2} />
